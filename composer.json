@@ -1,0 +1,28 @@
+{
+    "name": "tgi/webdav",
+    "description": "The simple PHP WebDAV client and stream wrapper forked from gletournel/WebDAV.",
+    "keywords": ["PHP","WebDAV","Stream","Wrapper"],
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Tgicm",
+            "email": "cmalfroy@tgi.fr"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "psr/log": "~1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~3.7.0"
+    },
+    "suggest": {
+        "monolog/monolog": "Adds support for logging HTTP requests and responses",
+        "symfony/finder": "Allows you to more easily filter the files that the stream wrapper returns"
+    },
+    "autoload": {
+        "psr-0": {"Tgi\\WebDav": "src/"}
+    }
+}

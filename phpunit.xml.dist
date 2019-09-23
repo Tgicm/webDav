@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  colors="false"
+  strict="true"
+  verbose="true"
+  stopOnFailure="false"
+  convertErrorsToExceptions="true"
+  convertNoticesToExceptions="true"
+  convertWarningsToExceptions="true"
+  bootstrap="tests/bootstrap.php">
+
+  <testsuites>
+    <testsuite name="WebDav Test Suite">
+      <directory>tests/Tgi/</directory>
+    </testsuite>
+  </testsuites>
+
+  <filter>
+    <whitelist>
+      <directory suffix=".php">src/Tgi/</directory>
+    </whitelist>
+  </filter>
+</phpunit>
