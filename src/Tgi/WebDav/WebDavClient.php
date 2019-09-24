@@ -481,13 +481,15 @@ class WebDavClient
         $headers = array(
             'Content-Type' => 'Content-Type: text/xml; charset="utf-8"',
             'Depth' => $depth,
-            //'Authorization' => 'Basic '.base64_encode('user_1:Marsupilami!82'),
         );
 
         $request = new Request('PROPFIND', $uri, $headers, $body);
 
-        $response = $this->getHttpClient()->send($request);
-
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
         return $response->getStatusCode() == 207 ? MultiStatus::parse($this, $response->getBody()) : null;
     }
 
