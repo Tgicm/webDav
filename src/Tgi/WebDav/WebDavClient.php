@@ -8,15 +8,11 @@
 namespace Tgi\WebDav;
 
 use GuzzleHttp\Psr7\Request;
-
 use GuzzleHttp\Url;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Response as HttpResponse;
-use GuzzleHttp\Message\RequestInterface as HttpRequest;
-use GuzzleHttp\Exception\BadResponseException;
-use Guzzle\Stream\PhpStreamRequestFactory;
 use Tgi\WebDav\Exception\NoSuchResourceException;
 use Tgi\WebDav\Exception\HttpException;
 use Tgi\WebDav\Header\TimeoutHeader;
@@ -144,6 +140,7 @@ class WebDavClient
     public function get($uri)
     {
         $request = new Request('GET', $uri);
+        //$request = new Request('METHOD', 'url', headers, body);
 
         try {
           $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth(), 'timeout' => 2]);
