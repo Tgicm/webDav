@@ -7,13 +7,16 @@
  */
 namespace Tgi\WebDav;
 
+use GuzzleHttp\Psr7\Request;
+
 use GuzzleHttp\Url;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Response as HttpResponse;
 use GuzzleHttp\Message\RequestInterface as HttpRequest;
-use Guzzle\Guzzle\Exception\BadResponseException;
-use Guzzle\Guzzle\PhpStreamRequestFactory;
+use GuzzleHttp\Exception\BadResponseException;
+use Guzzle\Stream\PhpStreamRequestFactory;
 use Tgi\WebDav\Exception\NoSuchResourceException;
 use Tgi\WebDav\Exception\HttpException;
 use Tgi\WebDav\Header\TimeoutHeader;
@@ -51,6 +54,12 @@ class WebDavClient
      * @var string The request options
      */
     protected $requestOptions;
+
+    /**
+     *
+     * @var array The array authentication
+     */
+    protected $auth;
 
     /**
      *
@@ -134,10 +143,15 @@ class WebDavClient
      */
     public function get($uri)
     {
-        $request = $this->createRequest('GET', $uri);
-        $response = $this->doRequest($request);
+        $request = new Request('GET', $uri);
 
-        return $response->isSuccessful() ? $response->getBody(true) : null;
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth(), 'timeout' => 2]);
+          return $response->getBody();
+        } catch (RequestException $e) {
+          return $e->getResponse()->getStatusCode();
+        }
+
     }
 
     /**
@@ -151,25 +165,19 @@ class WebDavClient
      */
     public function getStream($uri)
     {
-        $request = $this->createRequest('GET', $uri);
+        $request = new Request('GET', $uri);
+        $stream = true;
 
-        $factory = new PhpStreamRequestFactory();
-        $stream = $factory->fromRequest($request, array(), array(
-            'stream_class' => 'GuzzleHttp\Stream'
-        ));
-
-        // The implementation of streaming download proposed by Guzzle's Stream class does not care about
-        // HTTP errors. As a workaround, let's rebuild the HTTP response from the response headers sent in the
-        // $http_response_header variable (http://www.php.net/manual/en/reserved.variables.httpresponseheader.php)
-        $response = HttpResponse::fromMessage(implode("\r\n", $factory->getLastResponseHeaders()));
+        try {
+          $response = $this->getHttpClient()->get($uri , ['stream' => true]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+          $stream = false;
+        }
 
         // Creates History
         $this->lastRequest = $request;
         $this->lastResponse = $response;
-
-        if (! $response->isSuccessful()) {
-            $stream = false;
-        }
 
         if (! $stream && $this->throwExceptions) {
             switch ($response->getStatusCode()) {
@@ -192,10 +200,14 @@ class WebDavClient
      */
     public function exists($uri)
     {
-        $request = $this->createRequest('HEAD', $uri);
-        $response = $this->doRequest($request);
+        $request = new Request('HEAD', $uri);
 
-        return $response->getStatusCode() == 200;
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+          return $response->getStatusCode() == 200;
+        } catch (RequestException $e) {
+          return $e->getResponse()->getStatusCode() == 200;
+        }
     }
 
     /**
@@ -220,13 +232,17 @@ class WebDavClient
     public function put($uri, $body = null, array $options = null)
     {
         $headers = isset($options['headers']) ? $options['headers'] : array();
-        $request = $this->createRequest('PUT', $uri, $headers, $body);
 
+        $request = new Request('PUT', $uri, $headers, $body);
         if (isset($options['locktoken'])) {
             $request->setHeader('If', '(<' . $options['locktoken'] . '>)');
         }
 
-        $response = $this->doRequest($request);
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
 
         // 201 (Created) is the default success code
         return $response->getStatusCode() == 201;
@@ -252,13 +268,17 @@ class WebDavClient
     public function delete($uri, array $options = null)
     {
         $headers = isset($options['headers']) ? $options['headers'] : array();
-        $request = $this->createRequest('DELETE', $uri, $headers);
 
+        $request = new Request('DELETE', $uri, $headers);
         if (isset($options['locktoken'])) {
             $request->setHeader('If', '(<' . $options['locktoken'] . '>)');
         }
 
-        $response = $this->doRequest($request);
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
 
         // 204 (No Content) is the default success code
         return $response->getStatusCode() == 204;
@@ -284,13 +304,17 @@ class WebDavClient
     public function mkcol($uri, array $options = null)
     {
         $headers = isset($options['headers']) ? $options['headers'] : array();
-        $request = $this->createRequest('MKCOL', $uri, $headers);
 
+        $request = new Request('MKCOL', $uri, $headers);
         if (isset($options['locktoken'])) {
             $request->setHeader('If', '(<' . $options['locktoken'] . '>)');
         }
 
-        $response = $this->doRequest($request);
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
 
         // 201 (Created) is the default success code
         return $response->getStatusCode() == 201;
@@ -321,12 +345,13 @@ class WebDavClient
         $recursive = isset($options['recursive']) ? (bool) $options['recursive'] : false;
         $overwrite = isset($options['overwrite']) ? (bool) $options['overwrite'] : true;
 
-        $request = $this->createRequest('MOVE', $uri, array(
+        $headers = array(
             'Destination' => $this->resolveUrl($destination),
             'Overwrite' => $overwrite ? 'T' : 'F',
             'Depth' => $recursive ? 'Infinity' : '0'
-        ));
+        );
 
+        $request = new Request('MOVE', $uri, $headers);
         if (isset($options['locktoken'])) {
             $tokens = is_array($options['locktoken']) ? $options['locktoken'] : array(
                 $options['locktoken']
@@ -339,7 +364,12 @@ class WebDavClient
             $request->setHeader('If', implode(' ', $tokens));
         }
 
-        $response = $this->doRequest($request);
+
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
 
         // Note that if an error occurs with a resource other than the resource
         // identified in the Request-URI then the response must be a 207 (Multi-Status)
@@ -372,16 +402,34 @@ class WebDavClient
         $recursive = isset($options['recursive']) ? (bool) $options['recursive'] : false;
         $overwrite = isset($options['overwrite']) ? (bool) $options['overwrite'] : true;
 
-        $request = $this->createRequest('COPY', $uri, array(
+        $headers = array(
             'Destination' => $this->resolveUrl($destination),
             'Overwrite' => $overwrite ? 'T' : 'F',
             'Depth' => $recursive ? 'Infinity' : '0'
-        ));
+        );
 
-        $response = $this->doRequest($request);
+        $request = new Request('COPY', $uri, $headers);
+        if (isset($options['locktoken'])) {
+            $tokens = is_array($options['locktoken']) ? $options['locktoken'] : array(
+                $options['locktoken']
+            );
 
-        // Note that if an error in executing the COPY method occurs with a resource other
-        // than the resource identified in the Request-URI, then the response must be a 207 (Multi-Status)
+            foreach ($tokens as &$token) {
+                $token = "(<{$token}>)";
+            }
+
+            $request->setHeader('If', implode(' ', $tokens));
+        }
+
+
+        try {
+          $response = $this->getHttpClient()->send($request, ['auth' => $this->getAuth()]);
+        } catch (RequestException $e) {
+          $response = $e->getResponse();
+        }
+
+        // Note that if an error occurs with a resource other than the resource
+        // identified in the Request-URI then the response must be a 207 (Multi-Status)
         return $response->getStatusCode() == 201 || $response->getStatusCode() == 204;
     }
 
@@ -433,12 +481,15 @@ class WebDavClient
         $dom->appendChild($xPropfind)->appendChild($xProp);
         $body = $dom->saveXML();
 
-        $request = $this->createRequest('PROPFIND', $uri, array(
+        $headers = array(
             'Content-Type' => 'Content-Type: text/xml; charset="utf-8"',
-            'Depth' => $depth
-        ), $body);
+            'Depth' => $depth,
+            //'Authorization' => 'Basic '.base64_encode('user_1:Marsupilami!82'),
+        );
 
-        $response = $this->doRequest($request);
+        $request = new Request('PROPFIND', $uri, $headers, $body);
+
+        $response = $this->getHttpClient()->send($request);
 
         return $response->getStatusCode() == 207 ? MultiStatus::parse($this, $response->getBody()) : null;
     }
@@ -639,68 +690,7 @@ class WebDavClient
         return (string) $url;
     }
 
-    /**
-     * Sends a single request to a WebDAV server
-     *
-     * @param HttpRequest $request
-     *            The request
-     *
-     * @throws Exception\NoSuchResourceException
-     * @throws Exception\HttpException
-     * @return HttpResponse Returns the server response
-     */
-    protected function doRequest(HttpRequest $request)
-    {
-        $error = null;
-        $response = null;
 
-        $this->lastRequest = $request;
-        $this->lastResponse = null;
-
-        try {
-            $response = $request->send();
-        } catch (BadResponseException $error) {
-            $response = $error->getResponse();
-        }
-
-        // Creates History
-        $this->lastResponse = $response;
-
-        if ($error && $this->throwExceptions) {
-            switch ($response->getStatusCode()) {
-                case 404:
-                    throw new NoSuchResourceException('No such file or directory');
-                default:
-                    throw HttpException::factory($error);
-            }
-        }
-
-        return $response;
-    }
-
-    /**
-     * Create a new request configured for the client.
-     *
-     * @param string $method
-     *            HTTP method
-     * @param string $uri
-     *            Resource URI
-     * @param array $headers
-     *            HTTP headers
-     * @param string|resource $body
-     *            Entity body of request
-     *
-     * @return HttpRequest Returns the created request
-     */
-    protected function createRequest($method, $uri, array $headers = null, $body = null)
-    {
-        $url = $this->resolveUrl($uri);
-
-        $request = $this->getHttpClient()->createRequest($method, $url, $headers, $body, $this->requestOptions);
-        $request->setHeader('User-Agent', $this->userAgent);
-
-        return $request;
-    }
 
     /**
      * Register the WebDAV stream wrapper.
@@ -918,6 +908,18 @@ class WebDavClient
     }
 
     /**
+     *
+     * @return array Returns the Authentication settings array
+     */
+    protected function getAuth()
+    {
+        $auth = $this->requestOptions['auth'];
+        unset($auth[2]);
+
+        return $auth;
+    }
+
+    /**
      * Set whether exceptions should be thrown when an HTTP error is returned.
      *
      * @param bool $throwExceptions
@@ -954,10 +956,13 @@ class WebDavClient
     {
         // @codeCoverageIgnoreStart
         if ($this->httpClient === null) {
+
             $this->httpClient = new HttpClient();
         }
         // @codeCoverageIgnoreEnd
 
         return $this->httpClient;
     }
+
+
 }
