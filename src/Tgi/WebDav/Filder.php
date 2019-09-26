@@ -51,8 +51,8 @@ class Filder
 
   public function __construct(Response $response)
   {
-    $isFolder = ($this->response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
-    if ($isFolder)){
+    $isFolder = ($response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
+    if ($isFolder){
       $size = ($response->getproperties()->get('D:getcontentlength') != null) ? $response->getproperties()->get('D:getcontentlength')->getValue() : null;
     } else {
       $size = ($response->getproperties()->get('D:quota-used-bytes') != null) ? $response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
@@ -84,7 +84,7 @@ class Filder
      */
     public function getName()
     {
-        return $this->name);
+        return $this->name;
     }
 
     /**
