@@ -123,13 +123,9 @@ class Filder
      *
      * @return mixed
      */
-    public function getSize($string = true)
+    public function getSize()
     {
-      if ($this->size == null){
-        return null;
-      }
-      
-      return ($string == true) ? $this->formatSizeUnits($this->size) : $this->size;
+      return $this->size;
     }
 
 
@@ -162,34 +158,6 @@ class Filder
         return $this->response;
     }
 
-    function formatSizeUnits($bytes)
-    {
-        if ($bytes >= 1073741824)
-        {
-            $bytes = number_format($bytes / 1073741824, 2) . ' GB';
-        }
-        elseif ($bytes >= 1048576)
-        {
-            $bytes = number_format($bytes / 1048576, 2) . ' MB';
-        }
-        elseif ($bytes >= 1024)
-        {
-            $bytes = number_format($bytes / 1024, 2) . ' KB';
-        }
-        elseif ($bytes > 1)
-        {
-            $bytes = $bytes . ' bytes';
-        }
-        elseif ($bytes == 1)
-        {
-            $bytes = $bytes . ' byte';
-        }
-        else
-        {
-            $bytes = '0 bytes';
-        }
 
-        return $bytes;
-    }
 
 }
