@@ -74,6 +74,21 @@ class MultiStatus implements \IteratorAggregate, \Countable
     }
 
     /**
+     * @return array Returns an array of responses list
+     */
+    public function toArray()
+    {
+        $array = null;
+        if($this->responses != null){
+          foreach($this->responses as $response){
+            $array[] = $response;
+          }
+        }
+
+        return $array;
+    }
+
+    /**
      * @return int Returns the number of single response messages
      */
     public function count()
