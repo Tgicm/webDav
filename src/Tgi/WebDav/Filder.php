@@ -47,24 +47,26 @@ class Filder
   /**
    * @var string
    */
-  protected $size = null;
+  protected $size;
 
   public function __construct(Response $response)
   {
-    $isFolder = ($response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
-    if ($isFolder){
-      $size = ($response->getproperties()->get('D:getcontentlength') != null) ? $response->getproperties()->get('D:getcontentlength')->getValue() : null;
-    } else {
-      $size = ($response->getproperties()->get('D:quota-used-bytes') != null) ? $response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
-    }
     $this->response = $response;
-
     $this->path = $response->getHref();
     $this->name = basename($this->path);
+    $this->lastEdited = ($response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
+
+    $size = null;
+    $isFolder = ($response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
+    if ($isFolder == false){
+       $size = ($response->getproperties()->get('D:getcontentlength') != null) ? $response->getproperties()->get('D:getcontentlength')->getValue() : null;
+    }else {
+       $size = ($response->getproperties()->get('D:quota-used-bytes') != null) ? $response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
+    }
+
+    $this->size = $size;
     $this->mimeType = ($isFolder == false) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
     $this->ext = ($isFolder == false) ? pathinfo($this->getName(), PATHINFO_EXTENSION) : null;
-    $this->lastEdited = ($response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
-    $this->size = $size;
   }
 
     /**
@@ -123,11 +125,11 @@ class Filder
      */
     public function getSize($string = true)
     {
-      if ($this->size != null){
-        return ($string == true) ? $this->formatSizeUnits($this->size) : $this->size;
+      if ($this->size == null){
+        return null;
       }
-
-      return $this->size;
+      
+      return ($string == true) ? $this->formatSizeUnits($this->size) : $this->size;
     }
 
 
