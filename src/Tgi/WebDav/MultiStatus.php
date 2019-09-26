@@ -8,6 +8,8 @@
 
 namespace Tgi\WebDav;
 
+use Tgi\WebDav\Filder;
+
 /**
  * A multi-status response that contains multiple response messages
  *
@@ -87,6 +89,26 @@ class MultiStatus implements \IteratorAggregate, \Countable
 
         return $array;
     }
+
+
+    /**
+     * @return array Returns an array of filders list
+     */
+    public function getFilders()
+    {
+        $array = null;
+
+        if($this->toArray() != null){
+          foreach($this->toArray() as $response){
+            $filder = new filder($response);
+            $array[] = $filder;
+          }
+        }
+
+        return $array;
+    }
+
+
 
     /**
      * @return int Returns the number of single response messages
