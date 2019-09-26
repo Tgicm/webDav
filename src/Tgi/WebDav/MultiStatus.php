@@ -8,6 +8,8 @@
 
 namespace Tgi\WebDav;
 
+use Tgi\WebDav\Filder;
+
 /**
  * A multi-status response that contains multiple response messages
  *
