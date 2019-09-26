@@ -47,11 +47,24 @@ class Filder
   /**
    * @var string
    */
-  protected $size;
+  protected $size = null;
 
   public function __construct(Response $response)
   {
+    $isFolder = ($this->response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
+    if ($isFolder)){
+      $size = ($response->getproperties()->get('D:getcontentlength') != null) ? $response->getproperties()->get('D:getcontentlength')->getValue() : null;
+    } else {
+      $size = ($response->getproperties()->get('D:quota-used-bytes') != null) ? $response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
+    }
     $this->response = $response;
+
+    $this->path = $response->getHref();
+    $this->name = basename($this->path);
+    $this->mimeType = ($isFolder == false) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+    $this->ext = ($isFolder == false) ? pathinfo($this->getName(), PATHINFO_EXTENSION) : null;
+    $this->lastEdited = ($response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
+    $this->size = $size;
   }
 
     /**
@@ -61,7 +74,7 @@ class Filder
      */
     public function getPath()
     {
-        return $this->response->getHref();
+        return $this->path;
     }
 
     /**
@@ -71,7 +84,7 @@ class Filder
      */
     public function getName()
     {
-        return basename($this->getPath());
+        return $this->name);
     }
 
     /**
@@ -81,7 +94,7 @@ class Filder
      */
     public function getMimeType()
     {
-        return ($this->isfolder() == false) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+        return $this->mimeType;
     }
 
     /**
@@ -91,7 +104,7 @@ class Filder
      */
     public function getExt()
     {
-        return ($this->isfolder() == false) ? pathinfo($this->getName(), PATHINFO_EXTENSION) : null;
+        return $this->ext;
     }
 
     /**
@@ -100,7 +113,7 @@ class Filder
      */
     public function getLastEdited()
     {
-        return ($this->response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
+        return $this->lastEdited;
     }
 
     /**
@@ -110,17 +123,11 @@ class Filder
      */
     public function getSize($string = true)
     {
-      if ($this->isFolder()){
-        $size = ($this->response->getproperties()->get('D:getcontentlength') != null) ? $this->response->getproperties()->get('D:getcontentlength')->getValue() : null;
-      } else {
-        $size = ($this->response->getproperties()->get('D:quota-used-bytes') != null) ? $this->response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
+      if ($this->size != null){
+        return ($string == true) ? $this->formatSizeUnits($this->size) : $this->size;
       }
 
-      if ($size != null){
-        return ($string == true) ? $this->formatSizeUnits($size) : $size;
-      }
-
-      return $size;
+      return $this->size;
     }
 
 
