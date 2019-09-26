@@ -27,6 +27,11 @@ class Filder
   /**
    * @var string
    */
+  protected $name;
+
+  /**
+   * @var string
+   */
   protected $mimeType;
 
   /**
@@ -177,7 +182,5 @@ class Filder
 
         return $bytes;
     }
-
-
 
 }
