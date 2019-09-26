@@ -100,7 +100,7 @@ class Filder
      */
     public function getLastEdited()
     {
-        return $this->response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
+        return ($this->response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
     }
 
     /**
