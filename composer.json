@@ -1,7 +1,7 @@
 {
     "name": "tgi/webdav",
     "description": "The simple PHP WebDAV client and stream wrapper forked from gletournel/WebDAV.",
-    "keywords": ["PHP","WebDAV","Stream","Wrapper"],
+    "keywords": ["PHP","WebDAV","Stream","Wrapper","Filder"],
     "type": "library",
     "license": "MIT",
     "minimum-stability": "dev",
