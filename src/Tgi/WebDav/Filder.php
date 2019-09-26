@@ -18,40 +18,12 @@ use Tgi\WebDav\Response;
  */
 class Filder
 {
-
-  /**
-   * @var string
-   */
-  protected $path;
-
-  /**
-   * @var string
-   */
-  protected $name;
-
-  /**
-   * @var string
-   */
-  protected $mimeType;
-
-  /**
-   * @var string
-   */
-  protected $ext;
-
-  /**
-   * @var \DateTime
-   */
-  protected $lastEdited;
-
-  /**
-   * @var string
-   */
-  protected $size;
-
   public function __construct(Response $response)
   {
-    $this->response = $response;
+    $this->path = $response->getHref();
+    $this->isfolder = (array_key_exists('D:quota-used-bytes', $response->getproperties())) ? true : false;
+    $this->mimeType = (!$this->isfolder) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+    $this->lastEdited = ($response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
   }
 
     /**
@@ -61,7 +33,7 @@ class Filder
      */
     public function getPath()
     {
-        return $this->response->getHref();
+        return $this->path;
     }
 
     /**
@@ -81,26 +53,32 @@ class Filder
      */
     public function getMimeType()
     {
-        return ($this->isfolder() == false) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+        return $this->mimeType;
     }
 
     /**
      * Get the file extension
      *
-     * @return string
+     * @return mixed
      */
     public function getExt()
     {
-        return ($this->isfolder() == false) ? pathinfo($this->getName(), PATHINFO_EXTENSION) : null;
+        $ext = null;
+        if(!$this->isFolder){
+          $ext = pathinfo($this->getName(), PATHINFO_EXTENSION);
+        }
+
+        return $ext;
     }
 
     /**
      * Get the value of Last Edited
-     * @return \DateTime
+     *
+     * @return mixed
      */
     public function getLastEdited()
     {
-        return $this->response->getproperties()->get('D:getlastmodified') != null) ? $response->getproperties()->get('D:getlastmodified')->getTime() : null;
+        return $this->lastEdited;
     }
 
     /**
@@ -108,21 +86,10 @@ class Filder
      *
      * @return mixed
      */
-    public function getSize($string = true)
+    public function getSize()
     {
-      if ($this->isFolder()){
-        $size = ($this->response->getproperties()->get('D:getcontentlength') != null) ? $this->response->getproperties()->get('D:getcontentlength')->getValue() : null;
-      } else {
-        $size = ($this->response->getproperties()->get('D:quota-used-bytes') != null) ? $this->response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
-      }
-
-      if ($size != null){
-        return ($string == true) ? $this->formatSizeUnits($size) : $size;
-      }
-
-      return $size;
+        return $this->size;
     }
-
 
     /**
     * Get the file/folder Tag
@@ -134,53 +101,6 @@ class Filder
         return $this->tag;
     }
 
-    /**
-     * return true if filder is a folder
-     *
-     * @return bool
-     */
-    public function isFolder()
-    {
-        return ($this->response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
-    }
 
-    /**
-     * Get the file/folder path
-     * @return Response
-     */
-    public function getResponse()
-    {
-        return $this->response;
-    }
-
-    function formatSizeUnits($bytes)
-    {
-        if ($bytes >= 1073741824)
-        {
-            $bytes = number_format($bytes / 1073741824, 2) . ' GB';
-        }
-        elseif ($bytes >= 1048576)
-        {
-            $bytes = number_format($bytes / 1048576, 2) . ' MB';
-        }
-        elseif ($bytes >= 1024)
-        {
-            $bytes = number_format($bytes / 1024, 2) . ' KB';
-        }
-        elseif ($bytes > 1)
-        {
-            $bytes = $bytes . ' bytes';
-        }
-        elseif ($bytes == 1)
-        {
-            $bytes = $bytes . ' byte';
-        }
-        else
-        {
-            $bytes = '0 bytes';
-        }
-
-        return $bytes;
-    }
 
 }
