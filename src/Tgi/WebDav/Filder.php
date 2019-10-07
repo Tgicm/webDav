@@ -58,14 +58,24 @@ class Filder
 
     $size = null;
     $isFolder = ($response->getproperties()->get('D:quota-used-bytes') != null) ? true : false;
+
+    //dump($isFolder);
+    //dump($response->getproperties());
+
     if ($isFolder == false){
        $size = ($response->getproperties()->get('D:getcontentlength') != null) ? $response->getproperties()->get('D:getcontentlength')->getValue() : null;
     }else {
        $size = ($response->getproperties()->get('D:quota-used-bytes') != null) ? $response->getproperties()->get('D:quota-used-bytes')->getValue() : null;
     }
-
     $this->size = $size;
-    $this->mimeType = ($isFolder == false) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+
+    if ($isFolder == false){
+      $mimetype = ($response->getproperties()->get('D:getcontenttype') != null) ? $response->getproperties()->get('D:getcontenttype')->getValue() : null;
+    } else {
+      $mimetype = null;
+    }
+    $this->mimeType = $mimetype;
+
     $this->ext = ($isFolder == false) ? pathinfo($this->getName(), PATHINFO_EXTENSION) : null;
   }
 
