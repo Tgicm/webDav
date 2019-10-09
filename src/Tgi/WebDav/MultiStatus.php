@@ -90,26 +90,6 @@ class MultiStatus implements \IteratorAggregate, \Countable
         return $array;
     }
 
-    /**
- * @return array Returns an array of filders list
- */
-public function getFilders($showParent = true)
-{
-    $filders = null;
-    $responses = $this->toArray();
-    if($responses != null && $showParent == false){
-      unset($responses[0]);
-    }
-
-    if($responses != null){
-      foreach($responses as $response){
-        $filder = new filder($response);
-        $array[] = $filder;
-      }
-    }
-
-    return $array;
-}
 
     /**
      * @return int Returns the number of single response messages
